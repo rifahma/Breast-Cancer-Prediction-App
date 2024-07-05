@@ -2,7 +2,10 @@ import streamlit as st
 import joblib 
 import pandas as pd
 
-# Load the model that we've downloaded
+# Set page config for mobile responsiveness
+st.set_page_config(page_title="Breast Cancer Diagnosis Prediction App", layout="wide")
+
+# Load the model
 model = joblib.load('breast_cancer_model.pkl')
 
 st.title('Breast Cancer Diagnosis Prediction App')
@@ -11,21 +14,24 @@ st.write("""
 ### Answer the following questions to get a prediction and get personalized suggestion based on what you have input:
 """)
 
+# Sidebar for user inputs
+st.sidebar.header('User Input Parameters')
+
 # Question: Personal and family medical record
-diagnosed_cancer = st.radio('Have you ever been diagnosed with breast cancer or any other type of cancer before?', ['No', 'Yes'])
-previous_biopsies = st.radio('Have you had any previous breast biopsies or surgeries?', ['No', 'Yes'])
-family_history = st.radio('Do you have a family history of breast cancer (e.g., mother, sister, daughter)?', ['No', 'Yes'])
+diagnosed_cancer = st.sidebar.radio('Have you ever been diagnosed with breast cancer or any other type of cancer before?', ['No', 'Yes'])
+previous_biopsies = st.sidebar.radio('Have you had any previous breast biopsies or surgeries?', ['No', 'Yes'])
+family_history = st.sidebar.radio('Do you have a family history of breast cancer (e.g., mother, sister, daughter)?', ['No', 'Yes'])
 
 # Question: Symptoms and Physical Changes
-lumps_changes = st.radio('Have you noticed any lumps or changes in your breast tissue?', ['No', 'Yes'])
-pain_tenderness = st.radio('Have you experienced any pain or tenderness in your breasts?', ['No', 'Yes'])
-nipple_discharge = st.radio('Do you have any nipple discharge or changes in the appearance of your nipples?', ['No', 'Yes'])
-size_shape_changes = st.radio('Have you observed any changes in the size, shape, or appearance of your breasts?', ['No', 'Yes'])
-skin_changes = st.radio('Have you noticed any skin changes on your breasts, such as dimpling or redness?', ['No', 'Yes'])
+lumps_changes = st.sidebar.radio('Have you noticed any lumps or changes in your breast tissue?', ['No', 'Yes'])
+pain_tenderness = st.sidebar.radio('Have you experienced any pain or tenderness in your breasts?', ['No', 'Yes'])
+nipple_discharge = st.sidebar.radio('Do you have any nipple discharge or changes in the appearance of your nipples?', ['No', 'Yes'])
+size_shape_changes = st.sidebar.radio('Have you observed any changes in the size, shape, or appearance of your breasts?', ['No', 'Yes'])
+skin_changes = st.sidebar.radio('Have you noticed any skin changes on your breasts, such as dimpling or redness?', ['No', 'Yes'])
 
 # Question: Screening and Preventive Measures
-mammogram = st.radio('Have you had a mammogram before, and if so, when was your last one?', ['No', 'Yes'])
-other_screening = st.radio('Have you undergone any other breast cancer screening tests, such as MRI or ultrasound?', ['No', 'Yes'])
+mammogram = st.sidebar.radio('Have you had a mammogram before, and if so, when was your last one?', ['No', 'Yes'])
+other_screening = st.sidebar.radio('Have you undergone any other breast cancer screening tests, such as MRI or ultrasound?', ['No', 'Yes'])
 
 # Convert responses to numerical values
 diagnosed_cancer = 1 if diagnosed_cancer == 'Yes' else 0
@@ -74,3 +80,6 @@ if st.button('Get Prediction'):
         - Maintain a healthy lifestyle and be vigilant about any changes.
         - Consider scheduling routine mammograms as recommended by your healthcare provider.
         """)
+
+# Run this app in your local machine
+# streamlit run app.py
