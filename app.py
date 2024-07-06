@@ -1,85 +1,102 @@
 import streamlit as st
-import joblib 
 import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
 
-# Set page config for mobile responsiveness
-st.set_page_config(page_title="Breast Cancer Diagnosis Prediction App", layout="wide")
+# Load dataset
+data = pd.read_csv('data.csv')
 
-# Load the model
-model = joblib.load('breast_cancer_model.pkl')
+# Data preprocessing
+data.drop(['id', 'Unnamed: 32'], axis=1, inplace=True)
+le = LabelEncoder()
+data['diagnosis'] = le.fit_transform(data['diagnosis'])
 
-st.title('Breast Cancer Diagnosis Prediction App')
+# Split data
+X = data.drop('diagnosis', axis=1)
+y = data['diagnosis']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train model
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Model prediction
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+
+# Streamlit app
+st.title("Breast Cancer Prediction App")
 
 st.write("""
-### Answer the following questions to get a prediction and get personalized suggestion based on what you have input:
+### Predict Breast Cancer
+Please answer the following questions to help us predict the likelihood of breast cancer.
 """)
 
-# Sidebar for user inputs
-st.sidebar.header('User Input Parameters')
+# User input features
+def user_input_features():
+    st.sidebar.header('User Input Features')
+    
+    # Personal and Family Medical History
+    st.sidebar.subheader('Personal and Family Medical History')
+    previous_cancer = st.sidebar.selectbox('Have you ever been diagnosed with breast cancer or any other type of cancer before?', ['No', 'Yes'])
+    previous_biopsies = st.sidebar.selectbox('Have you had any previous breast biopsies or surgeries?', ['No', 'Yes'])
+    family_history = st.sidebar.selectbox('Do you have a family history of breast cancer (e.g., mother, sister, daughter)?', ['No', 'Yes'])
+    
+    # Symptoms and Physical Changes
+    st.sidebar.subheader('Symptoms and Physical Changes')
+    lumps_changes = st.sidebar.selectbox('Have you noticed any lumps or changes in your breast tissue?', ['No', 'Yes'])
+    pain_tenderness = st.sidebar.selectbox('Have you experienced any pain or tenderness in your breasts?', ['No', 'Yes'])
+    nipple_discharge = st.sidebar.selectbox('Do you have any nipple discharge or changes in the appearance of your nipples?', ['No', 'Yes'])
+    size_changes = st.sidebar.selectbox('Have you observed any changes in the size, shape, or appearance of your breasts?', ['No', 'Yes'])
+    skin_changes = st.sidebar.selectbox('Have you noticed any skin changes on your breasts, such as dimpling or redness?', ['No', 'Yes'])
+    
+    # Screening and Preventive Measures
+    st.sidebar.subheader('Screening and Preventive Measures')
+    mammogram = st.sidebar.selectbox('Have you had a mammogram before, and if so, when was your last one?', ['No', 'Yes'])
+    other_screening = st.sidebar.selectbox('Have you undergone any other breast cancer screening tests, such as MRI or ultrasound?', ['No', 'Yes'])
+    
+    # Collecting user input in a dictionary
+    user_data = {
+        'previous_cancer': previous_cancer,
+        'previous_biopsies': previous_biopsies,
+        'family_history': family_history,
+        'lumps_changes': lumps_changes,
+        'pain_tenderness': pain_tenderness,
+        'nipple_discharge': nipple_discharge,
+        'size_changes': size_changes,
+        'skin_changes': skin_changes,
+        'mammogram': mammogram,
+        'other_screening': other_screening
+    }
+    
+    features = pd.DataFrame(user_data, index=[0])
+    return features
 
-# Question: Personal and family medical record
-diagnosed_cancer = st.sidebar.radio('Have you ever been diagnosed with breast cancer or any other type of cancer before?', ['No', 'Yes'])
-previous_biopsies = st.sidebar.radio('Have you had any previous breast biopsies or surgeries?', ['No', 'Yes'])
-family_history = st.sidebar.radio('Do you have a family history of breast cancer (e.g., mother, sister, daughter)?', ['No', 'Yes'])
+input_df = user_input_features()
 
-# Question: Symptoms and Physical Changes
-lumps_changes = st.sidebar.radio('Have you noticed any lumps or changes in your breast tissue?', ['No', 'Yes'])
-pain_tenderness = st.sidebar.radio('Have you experienced any pain or tenderness in your breasts?', ['No', 'Yes'])
-nipple_discharge = st.sidebar.radio('Do you have any nipple discharge or changes in the appearance of your nipples?', ['No', 'Yes'])
-size_shape_changes = st.sidebar.radio('Have you observed any changes in the size, shape, or appearance of your breasts?', ['No', 'Yes'])
-skin_changes = st.sidebar.radio('Have you noticed any skin changes on your breasts, such as dimpling or redness?', ['No', 'Yes'])
+st.subheader('User Input features')
+st.write(input_df)
 
-# Question: Screening and Preventive Measures
-mammogram = st.sidebar.radio('Have you had a mammogram before, and if so, when was your last one?', ['No', 'Yes'])
-other_screening = st.sidebar.radio('Have you undergone any other breast cancer screening tests, such as MRI or ultrasound?', ['No', 'Yes'])
+# Prediction
+input_encoded = input_df.apply(LabelEncoder().fit_transform)
+prediction = model.predict(input_encoded)
+prediction_proba = model.predict_proba(input_encoded)
 
-# Convert responses to numerical values
-diagnosed_cancer = 1 if diagnosed_cancer == 'Yes' else 0
-previous_biopsies = 1 if previous_biopsies == 'Yes' else 0
-family_history = 1 if family_history == 'Yes' else 0
-lumps_changes = 1 if lumps_changes == 'Yes' else 0
-pain_tenderness = 1 if pain_tenderness == 'Yes' else 0
-nipple_discharge = 1 if nipple_discharge == 'Yes' else 0
-size_shape_changes = 1 if size_shape_changes == 'Yes' else 0
-skin_changes = 1 if skin_changes == 'Yes' else 0
-mammogram = 1 if mammogram == 'Yes' else 0
-other_screening = 1 if other_screening == 'Yes' else 0
+st.subheader('Prediction')
+breast_cancer_labels = np.array(['Benign', 'Malignant'])
+st.write(breast_cancer_labels[prediction])
 
-# Create a Dataframe for input features
-input_data = pd.DataFrame({
-    'diagnosed_cancer': [diagnosed_cancer],
-    'previous_biopsies': [previous_biopsies],
-    'family_history': [family_history],
-    'lumps_changes': [lumps_changes],
-    'pain_tenderness': [pain_tenderness],
-    'nipple_discharge': [nipple_discharge],
-    'size_shape_changes': [size_shape_changes],
-    'skin_changes': [skin_changes],
-    'mammogram': [mammogram],
-    'other_screening': [other_screening]
-})
+st.subheader('Prediction Probability')
+st.write(prediction_proba)
 
-# Predict button
-if st.button('Get Prediction'):
-    prediction = model.predict(input_data)
-    diagnosis = 'Malignant' if prediction[0] == 1 else 'Benign'
-    st.write(f'The prediction is: **{diagnosis}**')
+st.write('Model Accuracy: ', accuracy)
 
-    # Personalized suggestions
-    if diagnosis == 'Malignant':
-        st.write("""
-        ### Personalized Suggestions For You:
-        - **Please visit a healthcare professional immediately for further evaluation and diagnostic tests.**
-        - Consider scheduling an appointment with a breast cancer specialist.
-        - For more information, visit [local clinics or hospitals].
-        """)
-    else:
-        st.write("""
-        ### Personalized Suggestions For You:
-        - **Continue regular self-examinations and routine check-ups.**
-        - Maintain a healthy lifestyle and be vigilant about any changes.
-        - Consider scheduling routine mammograms as recommended by your healthcare provider.
-        """)
-
-# Run this app in your local machine
-# streamlit run app.py
+# Providing suggestions based on prediction
+st.subheader('Personalized Suggestions')
+if prediction == 0:
+    st.write("Based on your responses, it is less likely that you have breast cancer. However, it is important to continue regular screenings and consultations with your healthcare provider to avoid something wrong. Don't forget to keep health lifestyle!")
+else:
+    st.write("Based on your responses, it could have the potential to be cancerous. It is recommended that you consult with a healthcare provider for further evaluation and possible diagnostic tests.")
